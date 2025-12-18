@@ -23,12 +23,10 @@ public class Camellia_Test {
 
         String[] inputPaths = Arrays.copyOfRange(args, 2, args.length);
 
-        // ========== ОБЯЗАТЕЛЬНАЯ ПРОВЕРКА ЭТАЛОННЫХ ЗНАЧЕНИЙ ==========
-        System.out.println("Проверка эталонных значений (RFC 3713)...");
-        runRFCTests();
-        System.out.println("✅ Эталонные тесты пройдены.\n");
+        System.out.println("Проверка контрольных значений...");
+        RFCTests();
+        System.out.println("Контрольные значения совпали.\n");
 
-        // ========== ОСНОВНАЯ ОБРАБОТКА ==========
         Camellia cipher = new Camellia();
         List<String> allFiles = collectFiles(inputPaths);
         int failCount = 0;
@@ -48,7 +46,7 @@ public class Camellia_Test {
 
                 String decPath = path + ".dec";
                 boolean ok = cipher.verifySHA256(path, decPath);
-                System.out.println("  → Результат: " + (ok ? "OK" : "FAIL"));
+                System.out.println(" Полученный результат: " + (ok ? "OK" : "FAIL"));
                 if (!ok) failCount++;
                 System.out.println();
             } catch (Exception e) {
@@ -63,42 +61,41 @@ public class Camellia_Test {
         }
     }
 
-    // ========== ПРОВЕРКА ЭТАЛОННЫХ ЗНАЧЕНИЙ (RFC 3713) ==========
-    private static void runRFCTests() {
+    private static void RFCTests() {
         Camellia cam = new Camellia();
         boolean allPassed = true;
 
-        // 128-bit
+        // 128-бит
         byte[] k128 = hex("0123456789abcdef fedcba9876543210");
         byte[] pt = hex("0123456789abcdef fedcba9876543210");
         byte[] ct128 = hex("6767313854966973 0857065648eabe43");
         allPassed &= test(cam, k128, pt, ct128, "128-bit");
 
-        // 192-bit
+        // 192-бит
         byte[] k192 = hex("0123456789abcdef fedcba9876543210 0011223344556677");
         byte[] ct192 = hex("b4993401b3e996f8 4ee5cee7d79b09b9");
         allPassed &= test(cam, k192, pt, ct192, "192-bit");
 
-        // 256-bit
+        // 256-бит
         byte[] k256 = hex("0123456789abcdef fedcba9876543210 0011223344556677 8899aabbccddeeff");
         byte[] ct256 = hex("9acc237dff16d76c 20ef7c919e3a7509");
         allPassed &= test(cam, k256, pt, ct256, "256-bit");
 
         if (!allPassed) {
-            System.err.println("❌ Эталонные тесты НЕ ПРОЙДЕНЫ!");
+            System.err.println("Тест контрольных значений не пройден");
             System.exit(1);
         }
     }
 
     private static boolean test(Camellia c, byte[] key, byte[] pt, byte[] expected, String name) {
         byte[] actual = c.encryptBlockForTest(pt, key);
-        boolean ok = Arrays.equals(actual, expected);
-        System.out.printf("%s: %s\n", name, ok ? "OK" : "FAIL");
-        if (!ok) {
+        boolean mark = Arrays.equals(actual, expected);
+        System.out.printf("%s: %s\n", name, mark ? "OK" : "FAIL");
+        if (!mark) {
             System.out.println("  Ожидалось: " + bytesToHex(expected));
             System.out.println("  Получено:  " + bytesToHex(actual));
         }
-        return ok;
+        return mark;
     }
 
     private static byte[] hex(String s) {
@@ -116,7 +113,6 @@ public class Camellia_Test {
         return sb.toString().trim();
     }
 
-    // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========
     private static List<String> collectFiles(String[] paths) {
         List<String> files = new ArrayList<>();
         for (String p : paths) {
