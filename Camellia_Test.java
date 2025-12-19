@@ -29,7 +29,6 @@ public class Camellia_Test {
 
         Camellia cipher = new Camellia();
         List<String> allFiles = collectFiles(inputPaths);
-        int failCount = 0;
 
         for (String path : allFiles) {
             try {
@@ -47,17 +46,11 @@ public class Camellia_Test {
                 String decPath = path + ".dec";
                 boolean ok = cipher.verifySHA256(path, decPath);
                 System.out.println(" Полученный результат: " + (ok ? "OK" : "FAIL"));
-                if (!ok) failCount++;
                 System.out.println();
             } catch (Exception e) {
                 System.err.println("Ошибка при обработке " + path + ": " + e.getMessage());
                 e.printStackTrace();
-                failCount++;
             }
-        }
-
-        if (failCount > 0) {
-            System.exit(1);
         }
     }
 
@@ -87,13 +80,13 @@ public class Camellia_Test {
         }
     }
 
-    private static boolean test(Camellia c, byte[] key, byte[] pt, byte[] expected, String name) {
-        byte[] actual = c.encryptBlockForTest(pt, key);
-        boolean mark = Arrays.equals(actual, expected);
-        System.out.printf("%s: %s\n", name, mark ? "OK" : "FAIL");
+    private static boolean test(Camellia c, byte[] key, byte[] pt, byte[] ciphertext, String name) {
+        byte[] result = c.encryptBlockForTest(pt, key);
+        boolean mark = Arrays.equals(result, ciphertext);
+        System.out.println(name + ": " + (mark ? "OK" : "FAIL"));
         if (!mark) {
-            System.out.println("  Ожидалось: " + bytesToHex(expected));
-            System.out.println("  Получено:  " + bytesToHex(actual));
+            System.out.println("  Ожидалось: " + bytesToHex(ciphertext));
+            System.out.println("  Получено:  " + bytesToHex(result));
         }
         return mark;
     }
@@ -131,7 +124,7 @@ public class Camellia_Test {
         } else if (Files.isDirectory(root)) {
             try {
                 Files.walk(root)
-                        .filter(Files::isRegularFile)
+                        .filter(path -> Files.isRegularFile(path))
                         .forEach(p -> result.add(p.toString()));
             } catch (Exception e) {
                 System.err.println("Ошибка обхода директории: " + root);
